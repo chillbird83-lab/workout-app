@@ -89,6 +89,25 @@ const EXPERIENCE_MAP = {
   'advanced': 'advanced (3+ years of consistent lifting)'
 };
 
+const SHORT_GOAL = {
+  'lose-fat': 'Fat loss',
+  'build-muscle': 'Muscle gain',
+  'general-fitness': 'General fitness',
+  'endurance': 'Endurance'
+};
+const SHORT_EQUIPMENT = {
+  'full-gym': 'Full gym',
+  'home-dumbbells': 'Home dumbbells',
+  'home-barbell': 'Home barbell',
+  'bodyweight': 'Bodyweight',
+  'bands': 'Resistance bands'
+};
+const SHORT_EXPERIENCE = {
+  'beginner': 'Beginner',
+  'intermediate': 'Intermediate',
+  'advanced': 'Advanced'
+};
+
 const FREE_PLANS_PER_MONTH = 1;
 const PLAN_TTL_SECONDS = 60 * 60 * 24 * 90; // 90 days
 
@@ -130,12 +149,13 @@ async function handlePlanPage(id, url, request, env) {
   try { plan = JSON.parse(planRaw); } catch { return indexResponse; }
 
   const s = plan.summary || {};
+  const short = plan.short || {};
   const split = s.split || 'Workout';
   const days = s.days_per_week || 4;
   const weeks = s.duration_weeks || 4;
-  const goal = s.goal || 'fitness';
-  const equipment = s.equipment || '';
-  const experience = s.experience || '';
+  const goal = (short.goal || s.goal || 'fitness').toLowerCase();
+  const equipment = short.equipment || s.equipment || '';
+  const experience = (short.experience || s.experience || '').toLowerCase();
 
   const title = `${days}-day ${split} plan — LiftGenie`;
   const description = `${weeks}-week ${split} plan for ${goal}. ${equipment}${experience ? ` · ${experience}` : ''}. Generated free by LiftGenie.`
@@ -278,6 +298,12 @@ Return only the JSON described in the system prompt.`;
       env.RATE_LIMIT.put(key, String(current + 1), { expirationTtl: 60 * 60 * 24 * 35 })
     );
   }
+
+  plan.short = {
+    goal: SHORT_GOAL[goal],
+    equipment: SHORT_EQUIPMENT[equipment],
+    experience: SHORT_EXPERIENCE[experience]
+  };
 
   let id = null;
   if (env.RATE_LIMIT) {

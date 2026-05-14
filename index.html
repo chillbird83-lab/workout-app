@@ -319,6 +319,10 @@
     border: 1px solid var(--border);
     padding: 3px 10px;
     border-radius: 999px;
+    white-space: nowrap;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .sample-head h3 { margin: 0; font-size: 20px; }
   .week-tabs {
@@ -828,6 +832,10 @@
 
     function renderPlan(plan) {
       const s = plan.summary || {};
+      const short = plan.short || {};
+      const goalLabel = short.goal || s.goal || '';
+      const equipmentLabel = short.equipment || s.equipment || '';
+      const experienceLabel = short.experience || s.experience || '';
       const safety = s.safety_note ? `<div class="week-banner" style="border-top:1px solid var(--border)"><b>Safety note.</b> ${escapeHtml(s.safety_note)}</div>` : '';
 
       const tabs = plan.weeks.map((w, i) =>
@@ -861,10 +869,10 @@
           <span class="sample-tag" style="background:var(--accent);color:var(--accent-fg);border-color:var(--accent)">Your plan</span>
           <div class="sample-head">
             <div class="sample-meta">
-              <span class="pill">🎯 ${escapeHtml(s.goal || '')}</span>
+              <span class="pill">🎯 ${escapeHtml(goalLabel)}</span>
               <span class="pill">📅 ${s.days_per_week} days / week</span>
-              <span class="pill">🏋️ ${escapeHtml(s.equipment || '')}</span>
-              <span class="pill">📈 ${escapeHtml(s.experience || '')}</span>
+              <span class="pill">🏋️ ${escapeHtml(equipmentLabel)}</span>
+              <span class="pill">📈 ${escapeHtml(experienceLabel)}</span>
               <span class="pill">⏱ ~${s.estimated_session_minutes} min/session</span>
             </div>
             <h3>${escapeHtml(s.split || 'Your 4-week plan')}</h3>
