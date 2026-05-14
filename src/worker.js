@@ -152,7 +152,7 @@ Return only the JSON described in the system prompt.`;
       },
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 4096,
+        max_tokens: 16384,
         temperature: 0.7,
         system: [
           { type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }
@@ -178,17 +178,36 @@ Return only the JSON described in the system prompt.`;
     return jsonError('Empty response from AI', 502);
   }
 
-  let plan;
-  try {
-    plan = JSON.parse(planText);
-  } catch {
-    console.error('AI returned non-JSON:', planText.slice(0, 500));
+  if (data?.stop_reason === 'max_tokens') {
+    console.error('Hit max_tokens — output truncated. Length:', planText.length);
+    return jsonError('Plan was too long to fit. Try fewer days/week.', 502);
+  }
+
+  const plan = tryParsePlan(planText);
+  if (!plan) {
+    console.error('AI returned non-JSON. stop_reason:', data?.stop_reason, 'text head:', planText.slice(0, 200), 'tail:', planText.slice(-200));
     return jsonError('AI returned malformed plan', 502);
   }
 
   return new Response(JSON.stringify(plan), {
     headers: { 'content-type': 'application/json; charset=utf-8' }
   });
+}
+
+function tryParsePlan(raw) {
+  if (typeof raw !== 'string') return null;
+  let text = raw.trim();
+  // Strip ```json ... ``` or ``` ... ``` fences if Claude added them
+  const fence = text.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/);
+  if (fence) text = fence[1].trim();
+  try { return JSON.parse(text); } catch {}
+  // Fallback: extract the substring from first { to last }
+  const first = text.indexOf('{');
+  const last = text.lastIndexOf('}');
+  if (first !== -1 && last > first) {
+    try { return JSON.parse(text.slice(first, last + 1)); } catch {}
+  }
+  return null;
 }
 
 function jsonError(message, status) {
