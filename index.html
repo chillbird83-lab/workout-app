@@ -479,6 +479,42 @@
     display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap;
   }
   .foot a { color: var(--muted); margin-left: 16px; }
+
+  @media print {
+    :root, [data-theme="light"] {
+      --bg: #ffffff;
+      --surface: #ffffff;
+      --surface-2: #ffffff;
+      --border: #cfd3dc;
+      --text: #000000;
+      --muted: #444444;
+      --accent: #0a7a3a;
+      --accent-2: #0a5a8a;
+      --week-banner-bg: #f3f5f8;
+    }
+    html, body { background: #ffffff; color: #000000; }
+    header, .hero, .generator > .container > .card, #how, #sample, #pricing, #faq, footer { display: none !important; }
+    .generator { padding: 0; border-top: none; }
+    .generator > .container { padding: 0; }
+    #result { margin: 0; }
+    .sample-card { border: none; box-shadow: none; max-width: none; }
+    .sample-tag, .week-tabs, .sample-foot { display: none !important; }
+    .sample-head { padding: 0 0 12px; border-bottom: 1px solid var(--border); margin-bottom: 0; }
+    .sample-head h3 { font-size: 18px; }
+    .pill { background: #fff !important; border-color: var(--border) !important; }
+    .result-week { display: block !important; page-break-before: always; }
+    .result-week:first-of-type { page-break-before: avoid; }
+    .week-banner { background: var(--week-banner-bg); padding: 10px 14px; font-size: 13px; }
+    .days-grid { display: block; background: transparent; gap: 0; }
+    .day { padding: 12px 16px; page-break-inside: avoid; border-bottom: 1px solid var(--border); border-top: none; }
+    .day-head h4 { font-size: 14px; }
+    .day-head span { font-size: 11px; }
+    .ex-row { font-size: 12px; padding: 5px 0; }
+    .ex-row .ex-name div { font-size: 11px !important; }
+    .ex-sets { color: #000 !important; }
+    a { color: inherit; text-decoration: none; }
+    @page { margin: 1.5cm; }
+  }
 </style>
 </head>
 
@@ -833,8 +869,9 @@
           ${weekPanes}
           <div class="sample-foot">
             <span id="shareLine">Save the URL or print this page to keep your plan. Pro will let you save multiple plans and auto-track progression.</span>
-            <span style="display:flex;gap:8px">
+            <span style="display:flex;gap:8px;flex-wrap:wrap">
               <button type="button" class="btn btn-ghost" id="copyBtn" style="display:none">Copy share link</button>
+              <button type="button" class="btn btn-ghost" id="printBtn">Print / Save PDF</button>
               <button type="button" class="btn btn-ghost" id="regenBtn">Generate another →</button>
             </span>
           </div>
@@ -861,6 +898,11 @@
           history.replaceState(null, '', '/');
           form.scrollIntoView({ behavior: 'smooth', block: 'center' });
         });
+      }
+
+      const printBtn = result.querySelector('#printBtn');
+      if (printBtn) {
+        printBtn.addEventListener('click', () => window.print());
       }
 
       if (plan.id) {
