@@ -89,6 +89,8 @@ const EXPERIENCE_MAP = {
   'advanced': 'advanced (3+ years of consistent lifting)'
 };
 
+const FREE_PLANS_PER_MONTH = 1;
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -97,16 +99,31 @@ export default {
       if (request.method !== 'POST') {
         return jsonError('Method not allowed', 405);
       }
-      return handleGenerate(request, env);
+      return handleGenerate(request, env, ctx);
     }
 
     return env.ASSETS.fetch(request);
   }
 };
 
-async function handleGenerate(request, env) {
+function getRateKey(request) {
+  const ip = request.headers.get('cf-connecting-ip') || 'unknown';
+  const now = new Date();
+  const month = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
+  return `rate:${ip}:${month}`;
+}
+
+async function handleGenerate(request, env, ctx) {
   if (!env.ANTHROPIC_API_KEY) {
     return jsonError('Server is not configured (missing API key)', 500);
+  }
+
+  if (env.RATE_LIMIT) {
+    const key = getRateKey(request);
+    const current = Number.parseInt(await env.RATE_LIMIT.get(key), 10) || 0;
+    if (current >= FREE_PLANS_PER_MONTH) {
+      return jsonError('Free tier limit reached (1 plan/month). Upgrade to Pro for unlimited.', 429);
+    }
   }
 
   let body;
@@ -187,6 +204,14 @@ Return only the JSON described in the system prompt.`;
   if (!plan) {
     console.error('AI returned non-JSON. stop_reason:', data?.stop_reason, 'text head:', planText.slice(0, 200), 'tail:', planText.slice(-200));
     return jsonError('AI returned malformed plan', 502);
+  }
+
+  if (env.RATE_LIMIT) {
+    const key = getRateKey(request);
+    const current = Number.parseInt(await env.RATE_LIMIT.get(key), 10) || 0;
+    ctx.waitUntil(
+      env.RATE_LIMIT.put(key, String(current + 1), { expirationTtl: 60 * 60 * 24 * 35 })
+    );
   }
 
   return new Response(JSON.stringify(plan), {

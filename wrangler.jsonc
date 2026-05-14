@@ -12,5 +12,11 @@
   },
   "compatibility_flags": [
     "nodejs_compat"
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "RATE_LIMIT",
+      "id": "dbf14f522be14d5c80db0b950aac0d7a"
+    }
   ]
 }
