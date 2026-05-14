@@ -977,6 +977,16 @@
       }
     } catch (e) {}
 
+    try {
+      const prefillEl = document.getElementById('seo-prefill');
+      if (prefillEl) {
+        const prefill = JSON.parse(prefillEl.textContent);
+        if (prefill.goal && form.goal) form.goal.value = prefill.goal;
+        if (prefill.equipment && form.equipment) form.equipment.value = prefill.equipment;
+        if (prefill.experience && form.experience) form.experience.value = prefill.experience;
+      }
+    } catch (e) {}
+
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
 

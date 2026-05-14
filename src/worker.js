@@ -132,9 +132,90 @@ export default {
       return handlePlanPage(planPageMatch[1], url, request, env);
     }
 
+    // Programmatic SEO: /workout-plan/<goal>/<equipment>/<experience>
+    const seoMatch = url.pathname.match(/^\/workout-plan\/([a-z-]+)\/([a-z-]+)\/([a-z-]+)\/?$/);
+    if (seoMatch) {
+      return handleSeoLandingPage(seoMatch[1], seoMatch[2], seoMatch[3], url, request, env);
+    }
+
+    if (url.pathname === '/sitemap.xml') {
+      return new Response(generateSitemap(url.origin), {
+        headers: { 'content-type': 'application/xml; charset=utf-8' }
+      });
+    }
+
+    if (url.pathname === '/robots.txt') {
+      const body = `User-agent: *\nAllow: /\nDisallow: /api/\nSitemap: ${url.origin}/sitemap.xml\n`;
+      return new Response(body, { headers: { 'content-type': 'text/plain; charset=utf-8' } });
+    }
+
     return env.ASSETS.fetch(request);
   }
 };
+
+function generateSitemap(origin) {
+  const urls = ['/'];
+  for (const goal of Object.keys(SHORT_GOAL)) {
+    for (const equipment of Object.keys(SHORT_EQUIPMENT)) {
+      for (const experience of Object.keys(SHORT_EXPERIENCE)) {
+        urls.push(`/workout-plan/${goal}/${equipment}/${experience}`);
+      }
+    }
+  }
+  return '<?xml version="1.0" encoding="UTF-8"?>\n' +
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
+    urls.map(u => `  <url><loc>${origin}${u}</loc></url>`).join('\n') +
+    '\n</urlset>\n';
+}
+
+async function handleSeoLandingPage(goal, equipment, experience, url, request, env) {
+  if (!SHORT_GOAL[goal] || !SHORT_EQUIPMENT[equipment] || !SHORT_EXPERIENCE[experience]) {
+    return new Response('Not found', { status: 404 });
+  }
+
+  const indexUrl = new URL(request.url);
+  indexUrl.pathname = '/';
+  const indexResponse = await env.ASSETS.fetch(new Request(indexUrl, request));
+
+  const goalLabel = SHORT_GOAL[goal];
+  const equipmentLabel = SHORT_EQUIPMENT[equipment];
+  const experienceLabel = SHORT_EXPERIENCE[experience];
+  const goalLower = goalLabel.toLowerCase();
+  const equipmentLower = equipmentLabel.toLowerCase();
+  const experienceLower = experienceLabel.toLowerCase();
+
+  const title = `Free 4-week ${equipmentLower} workout plan for ${goalLower} (${experienceLower}) — LiftGenie`;
+  const description = `Get a personalized 4-week ${equipmentLower} workout plan for ${goalLower}, built for ${experienceLower} lifters. Generated free by AI in 5 seconds. No signup required.`;
+  const canonical = `${url.origin}${url.pathname.replace(/\/$/, '')}`;
+  const heroIntro = `Free 4-week ${equipmentLower}`;
+  const heroAccent = `workout plan`;
+  const heroTail = `for ${goalLower}`;
+  const prefill = JSON.stringify({ goal, equipment, experience });
+
+  return new HTMLRewriter()
+    .on('title', { element(el) { el.setInnerContent(title); } })
+    .on('meta[name="description"]', { element(el) { el.setAttribute('content', description); } })
+    .on('meta[property="og:title"]', { element(el) { el.setAttribute('content', title); } })
+    .on('meta[property="og:description"]', { element(el) { el.setAttribute('content', description); } })
+    .on('meta[property="og:url"]', { element(el) { el.setAttribute('content', canonical); } })
+    .on('meta[name="twitter:title"]', { element(el) { el.setAttribute('content', title); } })
+    .on('meta[name="twitter:description"]', { element(el) { el.setAttribute('content', description); } })
+    .on('link[rel="canonical"]', { element(el) { el.setAttribute('href', canonical); } })
+    .on('h1', {
+      element(el) {
+        el.setInnerContent(
+          `${heroIntro}<br/><span class="grad">${heroAccent}</span><br/>${heroTail}`,
+          { html: true }
+        );
+      }
+    })
+    .on('head', {
+      element(el) {
+        el.append(`<script id="seo-prefill" type="application/json">${prefill}</script>`, { html: true });
+      }
+    })
+    .transform(indexResponse);
+}
 
 async function handlePlanPage(id, url, request, env) {
   const indexUrl = new URL(request.url);
