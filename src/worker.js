@@ -118,7 +118,9 @@ async function handleGenerate(request, env, ctx) {
     return jsonError('Server is not configured (missing API key)', 500);
   }
 
-  if (env.RATE_LIMIT) {
+  const bypass = env.BYPASS_TOKEN && request.headers.get('x-bypass-token') === env.BYPASS_TOKEN;
+
+  if (env.RATE_LIMIT && !bypass) {
     const key = getRateKey(request);
     const current = Number.parseInt(await env.RATE_LIMIT.get(key), 10) || 0;
     if (current >= FREE_PLANS_PER_MONTH) {
@@ -206,7 +208,7 @@ Return only the JSON described in the system prompt.`;
     return jsonError('AI returned malformed plan', 502);
   }
 
-  if (env.RATE_LIMIT) {
+  if (env.RATE_LIMIT && !bypass) {
     const key = getRateKey(request);
     const current = Number.parseInt(await env.RATE_LIMIT.get(key), 10) || 0;
     ctx.waitUntil(
