@@ -107,16 +107,53 @@ export default {
       return handleGetPlan(planMatch[1], env);
     }
 
-    // Pretty share URLs like /plan/<id> serve the same SPA.
-    if (/^\/plan\/[a-z0-9]{6,32}$/.test(url.pathname)) {
-      const rewritten = new URL(request.url);
-      rewritten.pathname = '/';
-      return env.ASSETS.fetch(new Request(rewritten, request));
+    // Pretty share URLs like /plan/<id> serve the SPA with per-plan meta tags injected.
+    const planPageMatch = url.pathname.match(/^\/plan\/([a-z0-9]{6,32})$/);
+    if (planPageMatch) {
+      return handlePlanPage(planPageMatch[1], url, request, env);
     }
 
     return env.ASSETS.fetch(request);
   }
 };
+
+async function handlePlanPage(id, url, request, env) {
+  const indexUrl = new URL(request.url);
+  indexUrl.pathname = '/';
+  const indexResponse = await env.ASSETS.fetch(new Request(indexUrl, request));
+
+  if (!env.RATE_LIMIT) return indexResponse;
+  const planRaw = await env.RATE_LIMIT.get(`plan:${id}`);
+  if (!planRaw) return indexResponse;
+
+  let plan;
+  try { plan = JSON.parse(planRaw); } catch { return indexResponse; }
+
+  const s = plan.summary || {};
+  const split = s.split || 'Workout';
+  const days = s.days_per_week || 4;
+  const weeks = s.duration_weeks || 4;
+  const goal = s.goal || 'fitness';
+  const equipment = s.equipment || '';
+  const experience = s.experience || '';
+
+  const title = `${days}-day ${split} plan — LiftGenie`;
+  const description = `${weeks}-week ${split} plan for ${goal}. ${equipment}${experience ? ` · ${experience}` : ''}. Generated free by LiftGenie.`
+    .replace(/\s+/g, ' ').trim();
+  const canonical = `${url.origin}${url.pathname}`;
+
+  return new HTMLRewriter()
+    .on('title', { element(el) { el.setInnerContent(title); } })
+    .on('meta[name="description"]', { element(el) { el.setAttribute('content', description); } })
+    .on('meta[property="og:title"]', { element(el) { el.setAttribute('content', title); } })
+    .on('meta[property="og:description"]', { element(el) { el.setAttribute('content', description); } })
+    .on('meta[property="og:url"]', { element(el) { el.setAttribute('content', canonical); } })
+    .on('meta[property="og:type"]', { element(el) { el.setAttribute('content', 'article'); } })
+    .on('meta[name="twitter:title"]', { element(el) { el.setAttribute('content', title); } })
+    .on('meta[name="twitter:description"]', { element(el) { el.setAttribute('content', description); } })
+    .on('link[rel="canonical"]', { element(el) { el.setAttribute('href', canonical); } })
+    .transform(indexResponse);
+}
 
 function generateId() {
   const bytes = crypto.getRandomValues(new Uint8Array(8));
