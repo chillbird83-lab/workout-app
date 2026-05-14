@@ -832,8 +832,11 @@
           <div class="week-tabs" id="resultTabs" role="tablist">${tabs}</div>
           ${weekPanes}
           <div class="sample-foot">
-            <span>Save the URL or print this page to keep your plan. Pro will let you save multiple plans and auto-track progression.</span>
-            <button type="button" class="btn btn-ghost" id="regenBtn">Generate another →</button>
+            <span id="shareLine">Save the URL or print this page to keep your plan. Pro will let you save multiple plans and auto-track progression.</span>
+            <span style="display:flex;gap:8px">
+              <button type="button" class="btn btn-ghost" id="copyBtn" style="display:none">Copy share link</button>
+              <button type="button" class="btn btn-ghost" id="regenBtn">Generate another →</button>
+            </span>
           </div>
         </div>
       `;
@@ -855,11 +858,56 @@
       if (regen) {
         regen.addEventListener('click', () => {
           result.innerHTML = '';
+          history.replaceState(null, '', '/');
           form.scrollIntoView({ behavior: 'smooth', block: 'center' });
         });
       }
 
+      if (plan.id) {
+        const shareUrl = `${window.location.origin}/plan/${plan.id}`;
+        const copyBtn = result.querySelector('#copyBtn');
+        const shareLine = result.querySelector('#shareLine');
+        if (copyBtn) {
+          copyBtn.style.display = '';
+          copyBtn.addEventListener('click', async () => {
+            try {
+              await navigator.clipboard.writeText(shareUrl);
+              const original = copyBtn.textContent;
+              copyBtn.textContent = 'Copied!';
+              setTimeout(() => { copyBtn.textContent = original; }, 1500);
+            } catch {
+              window.prompt('Copy this URL:', shareUrl);
+            }
+          });
+        }
+        if (shareLine) {
+          shareLine.innerHTML = `Share this plan: <code style="background:var(--bg);padding:2px 6px;border-radius:4px;border:1px solid var(--border);font-size:12px">${escapeHtml(shareUrl)}</code>`;
+        }
+      }
+
       result.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    async function loadSharedPlan(id) {
+      result.innerHTML = `
+        <div class="result-loading">
+          <div class="spinner"></div>
+          <div>Loading plan…</div>
+        </div>
+      `;
+      try {
+        const res = await fetch(`/api/plan/${encodeURIComponent(id)}`);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Plan not found');
+        renderPlan(data);
+      } catch (err) {
+        result.innerHTML = `<div class="result-error"><b>Couldn't load shared plan.</b><br>${escapeHtml(err.message)}<br><span style="color:var(--muted);font-size:13px">Try generating a new one below.</span></div>`;
+      }
+    }
+
+    const sharedMatch = window.location.pathname.match(/^\/plan\/([a-z0-9]{6,32})$/);
+    if (sharedMatch) {
+      loadSharedPlan(sharedMatch[1]);
     }
 
     try {
@@ -913,6 +961,9 @@
           const err = new Error(data.error || `Request failed (${res.status})`);
           err.status = res.status;
           throw err;
+        }
+        if (data.id) {
+          history.pushState(null, '', `/plan/${data.id}`);
         }
         renderPlan(data);
       } catch (err) {

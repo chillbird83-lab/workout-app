@@ -90,21 +90,47 @@ const EXPERIENCE_MAP = {
 };
 
 const FREE_PLANS_PER_MONTH = 1;
+const PLAN_TTL_SECONDS = 60 * 60 * 24 * 90; // 90 days
 
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
     if (url.pathname === '/api/generate') {
-      if (request.method !== 'POST') {
-        return jsonError('Method not allowed', 405);
-      }
+      if (request.method !== 'POST') return jsonError('Method not allowed', 405);
       return handleGenerate(request, env, ctx);
+    }
+
+    const planMatch = url.pathname.match(/^\/api\/plan\/([a-z0-9]{6,32})$/);
+    if (planMatch) {
+      if (request.method !== 'GET') return jsonError('Method not allowed', 405);
+      return handleGetPlan(planMatch[1], env);
+    }
+
+    // Pretty share URLs like /plan/<id> serve the same SPA.
+    if (/^\/plan\/[a-z0-9]{6,32}$/.test(url.pathname)) {
+      const rewritten = new URL(request.url);
+      rewritten.pathname = '/';
+      return env.ASSETS.fetch(new Request(rewritten, request));
     }
 
     return env.ASSETS.fetch(request);
   }
 };
+
+function generateId() {
+  const bytes = crypto.getRandomValues(new Uint8Array(8));
+  return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function handleGetPlan(id, env) {
+  if (!env.RATE_LIMIT) return jsonError('Storage not configured', 500);
+  const raw = await env.RATE_LIMIT.get(`plan:${id}`);
+  if (!raw) return jsonError('Plan not found or expired', 404);
+  return new Response(raw, {
+    headers: { 'content-type': 'application/json; charset=utf-8' }
+  });
+}
 
 function getRateKey(request) {
   const ip = request.headers.get('cf-connecting-ip') || 'unknown';
@@ -213,6 +239,15 @@ Return only the JSON described in the system prompt.`;
     const current = Number.parseInt(await env.RATE_LIMIT.get(key), 10) || 0;
     ctx.waitUntil(
       env.RATE_LIMIT.put(key, String(current + 1), { expirationTtl: 60 * 60 * 24 * 35 })
+    );
+  }
+
+  let id = null;
+  if (env.RATE_LIMIT) {
+    id = generateId();
+    plan.id = id;
+    ctx.waitUntil(
+      env.RATE_LIMIT.put(`plan:${id}`, JSON.stringify(plan), { expirationTtl: PLAN_TTL_SECONDS })
     );
   }
 
