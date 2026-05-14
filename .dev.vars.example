@@ -1,0 +1,3 @@
+# Copy to .dev.vars for local development with `wrangler dev`.
+# In production, set this as a Cloudflare secret instead — never commit a real key.
+ANTHROPIC_API_KEY=sk-ant-...

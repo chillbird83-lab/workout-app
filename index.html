@@ -388,6 +388,35 @@
   }
   .sample-foot a { font-weight: 600; }
 
+  /* Result panel */
+  #result { margin-top: 32px; }
+  #result:empty { display: none; }
+  .result-loading {
+    text-align: center;
+    padding: 40px 24px;
+    color: var(--muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+  .result-loading .spinner {
+    display: inline-block;
+    width: 28px; height: 28px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: 12px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .result-error {
+    padding: 20px 24px;
+    color: var(--danger);
+    background: var(--surface);
+    border: 1px solid var(--danger);
+    border-radius: var(--radius);
+  }
+
   /* Pricing */
   .tiers { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; max-width: 760px; margin: 0 auto; }
   @media (max-width: 640px) { .tiers { grid-template-columns: 1fr; } }
@@ -490,7 +519,7 @@
     <div class="container">
       <div class="card">
         <h2>Build your plan</h2>
-        <form id="planForm" onsubmit="event.preventDefault(); alert('MVP: this will call the Cloudflare Worker.');">
+        <form id="planForm">
           <div class="field">
             <label for="goal">What's your main goal?</label>
             <select id="goal" name="goal" required>
@@ -540,6 +569,8 @@
           </div>
         </form>
       </div>
+
+      <div id="result" aria-live="polite"></div>
     </div>
   </section>
 
@@ -735,6 +766,143 @@
         }
       });
     }
+  })();
+
+  (function () {
+    const form = document.getElementById('planForm');
+    const result = document.getElementById('result');
+    if (!form || !result) return;
+
+    function escapeHtml(s) {
+      return String(s ?? '').replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[c]));
+    }
+
+    function fmtRest(seconds) {
+      const m = Math.floor(seconds / 60);
+      const s = seconds % 60;
+      return m > 0 ? `${m}:${String(s).padStart(2, '0')}` : `${s}s`;
+    }
+
+    function renderPlan(plan) {
+      const s = plan.summary || {};
+      const safety = s.safety_note ? `<div class="week-banner" style="border-top:1px solid var(--border)"><b>Safety note.</b> ${escapeHtml(s.safety_note)}</div>` : '';
+
+      const tabs = plan.weeks.map((w, i) =>
+        `<button type="button" class="${i === 0 ? 'active' : ''}" data-result-week="${w.week_number}">Week ${w.week_number}</button>`
+      ).join('');
+
+      const weekPanes = plan.weeks.map((w, i) => {
+        const days = w.days.map(d => `
+          <div class="day">
+            <div class="day-head"><h4>Day ${d.day_number} · ${escapeHtml(d.name)}</h4><span>${d.exercises.length} exercises</span></div>
+            ${d.exercises.map(ex => `
+              <div class="ex-row">
+                <span class="ex-name">${escapeHtml(ex.name)}${ex.notes ? `<div style="font-size:12px;color:var(--muted);margin-top:2px">${escapeHtml(ex.notes)}</div>` : ''}</span>
+                <span class="ex-sets">${ex.sets} × ${escapeHtml(ex.reps)}</span>
+                <span class="ex-rest">${fmtRest(ex.rest_seconds)} · RPE ${ex.target_rpe}</span>
+              </div>
+            `).join('')}
+          </div>
+        `).join('');
+
+        return `
+          <div class="result-week" data-result-week="${w.week_number}" style="${i === 0 ? '' : 'display:none'}">
+            <div class="week-banner"><b>Week ${w.week_number}.</b> ${escapeHtml(w.focus)}</div>
+            <div class="days-grid">${days}</div>
+          </div>
+        `;
+      }).join('');
+
+      result.innerHTML = `
+        <div class="sample-card">
+          <span class="sample-tag" style="background:var(--accent);color:var(--accent-fg);border-color:var(--accent)">Your plan</span>
+          <div class="sample-head">
+            <div class="sample-meta">
+              <span class="pill">🎯 ${escapeHtml(s.goal || '')}</span>
+              <span class="pill">📅 ${s.days_per_week} days / week</span>
+              <span class="pill">🏋️ ${escapeHtml(s.equipment || '')}</span>
+              <span class="pill">📈 ${escapeHtml(s.experience || '')}</span>
+              <span class="pill">⏱ ~${s.estimated_session_minutes} min/session</span>
+            </div>
+            <h3>${escapeHtml(s.split || 'Your 4-week plan')}</h3>
+          </div>
+          ${safety}
+          <div class="week-tabs" id="resultTabs" role="tablist">${tabs}</div>
+          ${weekPanes}
+          <div class="sample-foot">
+            <span>Save the URL or print this page to keep your plan. Pro will let you save multiple plans and auto-track progression.</span>
+            <button type="button" class="btn btn-ghost" id="regenBtn">Generate another →</button>
+          </div>
+        </div>
+      `;
+
+      const resultTabs = result.querySelectorAll('#resultTabs button');
+      const panes = result.querySelectorAll('.result-week');
+      resultTabs.forEach(btn => {
+        btn.addEventListener('click', () => {
+          resultTabs.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          const target = btn.dataset.resultWeek;
+          panes.forEach(p => {
+            p.style.display = p.dataset.resultWeek === target ? '' : 'none';
+          });
+        });
+      });
+
+      const regen = result.querySelector('#regenBtn');
+      if (regen) {
+        regen.addEventListener('click', () => {
+          result.innerHTML = '';
+          form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+      }
+
+      result.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+
+      const submitBtn = form.querySelector('button[type="submit"]');
+      const originalLabel = submitBtn.textContent;
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Generating…';
+
+      result.innerHTML = `
+        <div class="result-loading">
+          <div class="spinner"></div>
+          <div>Building your 4-week plan…</div>
+          <div style="font-size:12px;margin-top:6px">Usually takes 5–15 seconds.</div>
+        </div>
+      `;
+      result.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+      const payload = {
+        goal: form.goal.value,
+        days: form.days.value,
+        equipment: form.equipment.value,
+        experience: form.experience.value,
+        injuries: form.injuries.value
+      };
+
+      try {
+        const res = await fetch('/api/generate', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
+        renderPlan(data);
+      } catch (err) {
+        result.innerHTML = `<div class="result-error"><b>Couldn't generate plan.</b><br>${escapeHtml(err.message)}<br><span style="color:var(--muted);font-size:13px">Try again in a moment.</span></div>`;
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalLabel;
+      }
+    });
   })();
 
   (function () {
