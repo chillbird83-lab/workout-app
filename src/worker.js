@@ -1,3 +1,5 @@
+import { GOAL_EQUIPMENT_INTRO, EXPERIENCE_SUFFIX } from './seo-content.js';
+
 const SYSTEM_PROMPT = `You are a certified strength and conditioning coach (CSCS-equivalent) building a 4-week workout plan for one specific person. You write programs that real intermediate lifters and beginners actually follow — not theoretical templates from a textbook.
 
 You will be given the user's goal, weekly training frequency, available equipment, experience level, and any injuries. You will return ONE valid JSON object matching the schema below — no preamble, no commentary, no markdown fences. Just the JSON.
@@ -233,6 +235,19 @@ async function handleSeoLandingPage(goal, equipment, experience, url, request, e
   const heroTail = `for ${goalLower}`;
   const prefill = JSON.stringify({ goal, equipment, experience });
 
+  const intro = GOAL_EQUIPMENT_INTRO[goal]?.[equipment] || '';
+  const suffix = EXPERIENCE_SUFFIX[experience] || '';
+  const seoH2 = `${equipmentLabel} ${goalLower} plan: what to expect`;
+  const seoBlock = `
+    <section style="padding:64px 0;border-top:1px solid var(--border)">
+      <div class="container" style="max-width:760px">
+        <h2 style="font-size:24px;margin:0 0 20px;letter-spacing:-0.01em">${seoH2}</h2>
+        <p style="color:var(--muted);line-height:1.7;margin:0 0 18px;font-size:15px">${intro}</p>
+        <p style="color:var(--muted);line-height:1.7;margin:0;font-size:15px">${suffix}</p>
+      </div>
+    </section>
+  `;
+
   return new HTMLRewriter()
     .on('title', { element(el) { el.setInnerContent(title); } })
     .on('meta[name="description"]', { element(el) { el.setAttribute('content', description); } })
@@ -253,6 +268,11 @@ async function handleSeoLandingPage(goal, equipment, experience, url, request, e
     .on('head', {
       element(el) {
         el.append(`<script id="seo-prefill" type="application/json">${prefill}</script>`, { html: true });
+      }
+    })
+    .on('section#how', {
+      element(el) {
+        el.before(seoBlock, { html: true });
       }
     })
     .transform(indexResponse);
