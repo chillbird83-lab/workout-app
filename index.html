@@ -101,8 +101,8 @@
     --danger: #ff6b6b;
     --radius: 14px;
     --max: 1100px;
-    --accent-glow: rgba(124, 242, 156, 0.15);
-    --accent-glow-2: rgba(91, 224, 255, 0.12);
+    --accent-glow: rgba(124, 242, 156, 0.22);
+    --accent-glow-2: rgba(91, 224, 255, 0.18);
   }
   [data-theme="light"] {
     --bg: #fafbfc;
@@ -120,22 +120,19 @@
     --accent-glow: rgba(21, 128, 61, 0.15);
     --accent-glow-2: rgba(3, 105, 161, 0.08);
   }
-  html, body { 
-    background: var(--bg); 
-    background-image: radial-gradient(rgba(38, 43, 59, 0.4) 1px, transparent 1px);
-    background-size: 24px 24px;
-  }
-  [data-theme="light"] html, [data-theme="light"] body {
-    background-image: radial-gradient(rgba(228, 231, 238, 0.6) 1px, transparent 1px);
-  }
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; }
   body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background: var(--bg);
+    background-color: var(--bg);
+    background-image: radial-gradient(rgba(38, 43, 59, 0.4) 1px, transparent 1px);
+    background-size: 24px 24px;
     color: var(--text);
     line-height: 1.55;
     -webkit-font-smoothing: antialiased;
+  }
+  [data-theme="light"] body {
+    background-image: radial-gradient(rgba(228, 231, 238, 0.6) 1px, transparent 1px);
   }
   h1, h2, h3, h4, .brand, .btn, .price {
     font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -682,29 +679,29 @@
   .hero-glow, .generator-glow, .pricing-glow {
     position: absolute;
     border-radius: 50%;
-    filter: blur(140px);
+    filter: blur(100px);
     pointer-events: none;
     z-index: 0;
   }
   .hero-glow {
-    width: 400px;
-    height: 400px;
-    top: -150px;
-    right: -100px;
+    width: 600px;
+    height: 600px;
+    top: -250px;
+    right: -200px;
     background: radial-gradient(circle, var(--accent-glow-2) 0%, transparent 70%);
   }
   .generator-glow {
-    width: 500px;
-    height: 500px;
-    bottom: -150px;
-    left: -150px;
+    width: 700px;
+    height: 700px;
+    bottom: -300px;
+    left: -250px;
     background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
   }
   .pricing-glow {
-    width: 450px;
-    height: 450px;
+    width: 650px;
+    height: 650px;
     top: 50%;
-    right: -100px;
+    right: -250px;
     transform: translateY(-50%);
     background: radial-gradient(circle, var(--accent-glow-2) 0%, transparent 70%);
   }
