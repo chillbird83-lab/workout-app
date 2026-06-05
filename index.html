@@ -101,6 +101,7 @@
     --danger: #ff6b6b;
     --radius: 14px;
     --max: 1100px;
+    --accent-glow: rgba(124, 242, 156, 0.15);
   }
   [data-theme="light"] {
     --bg: #fafbfc;
@@ -115,6 +116,7 @@
     --header-bg: rgba(250,251,252,0.8);
     --week-banner-bg: rgba(21,128,61,0.06); /* Adjusted to match Green-700 */
     --tab-active-bg: rgba(21,128,61,0.04); /* Adjusted to match Green-700 */
+    --accent-glow: rgba(21, 128, 61, 0.15);
   }
   html, body { background: var(--bg); }
   * { box-sizing: border-box; }
@@ -284,14 +286,21 @@
     font-size: 15px;
     border: 1px solid transparent;
     cursor: pointer;
-    transition: transform 0.06s ease, background 0.15s ease;
+    transition: transform 0.06s ease, background 0.15s ease, box-shadow 0.15s ease;
   }
   .btn:hover { transform: translateY(-1px); text-decoration: none; }
   .btn:active, .theme-toggle:active, .menu-toggle:active, .close-menu:active {
     transform: scale(0.96);
   }
-  .btn-primary { background: var(--accent); color: var(--accent-fg); }
-  .btn-primary:hover { filter: brightness(1.08); }
+  .btn-primary { 
+    background: var(--accent); 
+    color: var(--accent-fg); 
+    box-shadow: 0 4px 12px var(--accent-glow);
+  }
+  .btn-primary:hover { 
+    filter: brightness(1.08); 
+    box-shadow: 0 6px 16px var(--accent-glow);
+  }
   .btn-ghost { background: transparent; color: var(--text); border-color: var(--border); }
   .btn-ghost:hover { background: var(--surface); }
 
@@ -331,6 +340,12 @@
     border-radius: 10px;
     font-size: 16px; /* 16px to prevent iOS auto-zoom */
     font-family: inherit;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .field select:focus, .field input:focus, .field textarea:focus {
+    border-color: var(--accent);
+    outline: none;
+    box-shadow: 0 0 0 3px var(--accent-glow);
   }
   .field textarea { min-height: 70px; resize: vertical; }
   .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
@@ -616,6 +631,10 @@
     border-radius: 12px;
     padding: 18px 22px;
     margin-bottom: 12px;
+    transition: border-color 0.15s ease;
+  }
+  details:hover {
+    border-color: var(--accent);
   }
   details summary {
     cursor: pointer;
