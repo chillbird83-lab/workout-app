@@ -1345,6 +1345,7 @@
             <span id="shareLine">Save the URL or print this page to keep your plan. Pro will let you save multiple plans and auto-track progression.</span>
             <span style="display:flex;gap:8px;flex-wrap:wrap">
               <button type="button" class="btn btn-ghost" id="copyBtn" style="display:none">Copy share link</button>
+              <button type="button" class="btn btn-ghost" id="icsBtn">Add to Calendar</button>
               <button type="button" class="btn btn-ghost" id="printBtn">Print / Save PDF</button>
               <button type="button" class="btn btn-ghost" id="regenBtn">Generate another →</button>
             </span>
@@ -1377,6 +1378,104 @@
       const printBtn = result.querySelector('#printBtn');
       if (printBtn) {
         printBtn.addEventListener('click', () => window.print());
+      }
+
+      const icsBtn = result.querySelector('#icsBtn');
+      if (icsBtn) {
+        icsBtn.addEventListener('click', () => {
+          function getNextMonday() {
+            const today = new Date();
+            const dayOfWeek = today.getDay();
+            const daysUntilNextMonday = (8 - dayOfWeek) % 7 || 7;
+            const nextMonday = new Date(today);
+            nextMonday.setDate(today.getDate() + daysUntilNextMonday);
+            nextMonday.setHours(8, 0, 0, 0);
+            return nextMonday;
+          }
+
+          function formatIcsDate(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            const h = String(date.getHours()).padStart(2, '0');
+            const min = String(date.getMinutes()).padStart(2, '0');
+            const s = String(date.getSeconds()).padStart(2, '0');
+            return `${y}${m}${d}T${h}${min}${s}`;
+          }
+
+          function escapeIcsText(str) {
+            return str
+              .replace(/\\/g, '\\\\')
+              .replace(/,/g, '\\,')
+              .replace(/;/g, '\\;')
+              .replace(/\n/g, '\\n');
+          }
+
+          const startMonday = getNextMonday();
+          const sessionDuration = plan.summary.estimated_session_minutes || 60;
+          const currentTimestamp = formatIcsDate(new Date()) + 'Z';
+          const dayOffsets = {
+            2: [0, 3], // Mon, Thu
+            3: [0, 2, 4], // Mon, Wed, Fri
+            4: [0, 1, 3, 4], // Mon, Tue, Thu, Fri
+            5: [0, 1, 2, 4, 5], // Mon, Tue, Wed, Fri, Sat
+            6: [0, 1, 2, 3, 4, 5] // Mon, Tue, Wed, Thu, Fri, Sat
+          };
+          const offsets = dayOffsets[plan.summary.days_per_week] || [0, 1, 2, 3, 4, 5, 6].slice(0, plan.summary.days_per_week);
+          
+          let events = [];
+          plan.weeks.forEach((w, wIdx) => {
+            const weekNumber = w.week_number;
+            w.days.forEach((d, dIdx) => {
+              const dayOffset = offsets[dIdx] !== undefined ? offsets[dIdx] : dIdx;
+              const eventDate = new Date(startMonday);
+              eventDate.setDate(startMonday.getDate() + (wIdx * 7) + dayOffset);
+              
+              const startDateStr = formatIcsDate(eventDate);
+              const endDate = new Date(eventDate);
+              endDate.setMinutes(eventDate.getMinutes() + sessionDuration);
+              const endDateStr = formatIcsDate(endDate);
+              
+              let desc = `Focus: ${w.focus}\n\nExercises:\n`;
+              d.exercises.forEach((ex, idx) => {
+                desc += `${idx + 1}. ${ex.name} — ${ex.sets} × ${ex.reps}\n`;
+                desc += `   Rest: ${fmtRest(ex.rest_seconds)} | RPE: ${ex.target_rpe}\n`;
+                if (ex.notes) desc += `   Notes: ${ex.notes}\n`;
+                desc += `\n`;
+              });
+              
+              const uid = `event-${plan.id || 'temp'}-w${weekNumber}-d${d.day_number}@liftgenie`;
+              
+              events.push(`BEGIN:VEVENT
+UID:${uid}
+DTSTAMP:${currentTimestamp}
+DTSTART:${startDateStr}
+DTEND:${endDateStr}
+SUMMARY:LiftGenie: W${weekNumber} D${d.day_number} - ${d.name}
+DESCRIPTION:${escapeIcsText(desc)}
+END:VEVENT`);
+            });
+          });
+          
+          const icsContent = `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//LiftGenie//Workout Plan//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+${events.join('\n')}
+END:VCALENDAR`;
+          
+          const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8;' });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.setAttribute("href", url);
+          const fileName = `workout_plan_${(plan.summary.split || 'plan').toLowerCase().replace(/\s+/g, '_')}.ics`;
+          link.setAttribute("download", fileName);
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+        });
       }
 
       if (plan.id) {
