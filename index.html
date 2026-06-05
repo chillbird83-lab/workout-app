@@ -7,6 +7,9 @@
 <meta name="description" content="Get a personalized 4-week workout plan in 5 seconds. Free, no signup. Tell us your goal, equipment, and experience — AI does the rest." />
 <meta name="google-site-verification" content="Kcnx44PlBr1EDCVxzITN86YIpcmGSYgZTUeD39ieprQ" />
 <link rel="canonical" href="https://workout-app.chillbird83.workers.dev/" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 <meta property="og:title" content="LiftGenie — Free AI Workout Plan Generator" />
 <meta property="og:description" content="Personalized 4-week workout plans in 5 seconds. Free, no signup required." />
@@ -105,30 +108,49 @@
     --surface-2: #f4f6fa;
     --border: #e4e7ee;
     --text: #14171f;
-    --muted: #5e6577;
-    --accent: #16a34a;
-    --accent-2: #0284c7;
+    --muted: #475569; /* Compliant contrast Slate-700 (> 4.5:1 on white) */
+    --accent: #15803d; /* Compliant contrast Green-700 (> 4.5:1 on white) */
+    --accent-2: #0369a1; /* Compliant contrast Blue-700 (> 4.5:1 on white) */
     --accent-fg: #ffffff;
     --header-bg: rgba(250,251,252,0.8);
-    --week-banner-bg: rgba(22,163,74,0.06);
-    --tab-active-bg: rgba(22,163,74,0.04);
+    --week-banner-bg: rgba(21,128,61,0.06); /* Adjusted to match Green-700 */
+    --tab-active-bg: rgba(21,128,61,0.04); /* Adjusted to match Green-700 */
   }
   html, body { background: var(--bg); }
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; }
   body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     background: var(--bg);
     color: var(--text);
     line-height: 1.55;
     -webkit-font-smoothing: antialiased;
   }
-  a { color: var(--accent-2); text-decoration: none; }
+  h1, h2, h3, h4, .brand, .btn, .price {
+    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  a { color: var(--accent-2); text-decoration: none; touch-action: manipulation; }
   a:hover { text-decoration: underline; }
 
   .container { max-width: var(--max); margin: 0 auto; padding: 0 24px; }
 
-  /* Header */
+  /* Keyboard Accessibility focus rings & Click tuning */
+  button:focus-visible,
+  a:focus-visible,
+  select:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  *:focus {
+    outline: none;
+  }
+  button, select, input, textarea, details summary {
+    touch-action: manipulation;
+  }
+
+  /* Header & Navigation */
   header {
     position: sticky; top: 0; z-index: 50;
     backdrop-filter: blur(10px);
@@ -141,28 +163,84 @@
   }
   .brand { font-weight: 700; font-size: 18px; letter-spacing: -0.01em; }
   .brand span { color: var(--accent); }
+  
+  .nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  
   .nav-links { display: flex; gap: 28px; font-size: 14px; color: var(--muted); align-items: center; }
   .nav-links a { color: var(--muted); }
   .nav-links a:hover { color: var(--text); text-decoration: none; }
-  .theme-toggle {
+  
+  .theme-toggle, .menu-toggle, .close-menu {
     background: transparent;
     border: 1px solid var(--border);
     color: var(--text);
-    width: 36px; height: 36px;
+    width: 44px; height: 44px;
     border-radius: 10px;
     cursor: pointer;
-    font-size: 16px;
     display: inline-flex; align-items: center; justify-content: center;
     transition: background 0.15s ease, transform 0.06s ease;
     font-family: inherit;
+    padding: 0;
   }
-  .theme-toggle:hover { background: var(--surface); }
+  .theme-toggle:hover, .menu-toggle:hover, .close-menu:hover { background: var(--surface); }
   .theme-toggle .icon-sun { display: none; }
-  .theme-toggle .icon-moon { display: inline; }
-  [data-theme="light"] .theme-toggle .icon-sun { display: inline; }
+  .theme-toggle .icon-moon { display: block; }
+  [data-theme="light"] .theme-toggle .icon-sun { display: block; }
   [data-theme="light"] .theme-toggle .icon-moon { display: none; }
-  @media (max-width: 540px) {
-    .nav-links a { display: none; }
+  
+  .menu-toggle { display: none; }
+  .close-menu { display: none; }
+
+  /* Mobile menu drawer rules */
+  @media (max-width: 768px) {
+    .menu-toggle {
+      display: inline-flex;
+    }
+    
+    .nav-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(4px);
+      z-index: 98;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+    .nav-overlay.open {
+      opacity: 1;
+      visibility: visible;
+    }
+    
+    .nav-links {
+      position: fixed;
+      top: 0; right: 0; bottom: 0;
+      width: 280px;
+      max-width: 80%;
+      background: var(--surface);
+      border-left: 1px solid var(--border);
+      padding: 80px 24px 24px;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 24px;
+      z-index: 99;
+      transform: translateX(100%);
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: -10px 0 30px rgba(0, 0, 0, 0.2);
+    }
+    .nav-links.open {
+      transform: translateX(0);
+    }
+    .close-menu {
+      display: inline-flex;
+      position: absolute;
+      top: 10px;
+      right: 24px;
+    }
   }
 
   /* Hero */
@@ -197,6 +275,7 @@
     margin: 0 auto 36px;
   }
   .cta-row { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+  
   .btn {
     display: inline-block;
     padding: 14px 22px;
@@ -208,6 +287,9 @@
     transition: transform 0.06s ease, background 0.15s ease;
   }
   .btn:hover { transform: translateY(-1px); text-decoration: none; }
+  .btn:active, .theme-toggle:active, .menu-toggle:active, .close-menu:active {
+    transform: scale(0.96);
+  }
   .btn-primary { background: var(--accent); color: var(--accent-fg); }
   .btn-primary:hover { filter: brightness(1.08); }
   .btn-ghost { background: transparent; color: var(--text); border-color: var(--border); }
@@ -247,7 +329,7 @@
     color: var(--text);
     border: 1px solid var(--border);
     border-radius: 10px;
-    font-size: 15px;
+    font-size: 16px; /* 16px to prevent iOS auto-zoom */
     font-family: inherit;
   }
   .field textarea { min-height: 70px; resize: vertical; }
@@ -314,17 +396,20 @@
   .sample-meta {
     display: flex; flex-wrap: wrap; gap: 6px 10px;
     font-size: 13px; color: var(--muted);
-    margin-bottom: 10px;
+    margin-bottom: 12px;
   }
   .sample-meta .pill {
     background: var(--bg);
     border: 1px solid var(--border);
-    padding: 3px 10px;
+    padding: 4px 10px;
     border-radius: 999px;
     white-space: nowrap;
     max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
   }
   .sample-head h3 { margin: 0; font-size: 20px; }
   .week-tabs {
@@ -396,29 +481,99 @@
     flex-wrap: wrap; gap: 12px;
     font-size: 13px; color: var(--muted);
   }
-  .sample-foot a { font-weight: 600; }
-
-  /* Result panel */
-  #result { margin-top: 32px; }
-  #result:empty { display: none; }
-  .result-loading {
-    text-align: center;
-    padding: 40px 24px;
-    color: var(--muted);
+  .popular-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 16px;
     background: var(--surface);
     border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    text-decoration: none;
+    font-size: 14px;
+    transition: border-color 0.15s ease, transform 0.06s ease;
+  }
+  .popular-link:hover {
+    border-color: var(--accent);
+    text-decoration: none;
+    transform: translateY(-1px);
+  }
+  .popular-link:active {
+    transform: scale(0.98);
+  }
+  .popular-link svg {
+    flex-shrink: 0;
+  }
+
+  /* Premium Shadow Scale & Depth */
+  .card, .step, .sample-card, .tier {
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.3);
+  }
+  [data-theme="light"] .card,
+  [data-theme="light"] .step,
+  [data-theme="light"] .sample-card,
+  [data-theme="light"] .tier {
+    box-shadow: 0 10px 30px -10px rgba(71, 85, 105, 0.08);
+  }
+
+  /* Result panel & Skeleton Shimmer Loader */
+  #result { margin-top: 32px; }
+  #result:empty { display: none; }
+  
+  .skeleton-card {
+    background: linear-gradient(180deg, var(--surface), var(--surface-2));
+    border: 1px solid var(--border);
     border-radius: var(--radius);
+    overflow: hidden;
+    max-width: 920px;
+    margin: 0 auto;
   }
-  .result-loading .spinner {
-    display: inline-block;
-    width: 28px; height: 28px;
-    border: 3px solid var(--border);
-    border-top-color: var(--accent);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
+  .skeleton-header {
+    padding: 24px 28px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .shimmer-bg {
+    background: linear-gradient(90deg, var(--surface-2) 25%, var(--border) 50%, var(--surface-2) 75%);
+    background-size: 200% 100%;
+    animation: shimmer-sweep 1.5s infinite linear;
+  }
+  @keyframes shimmer-sweep {
+    to { background-position: -200% 0; }
+  }
+  .skeleton-line {
+    height: 16px;
+    border-radius: 6px;
     margin-bottom: 12px;
+    display: inline-block;
   }
-  @keyframes spin { to { transform: rotate(360deg); } }
+  .skeleton-pill { width: 100px; height: 26px; border-radius: 999px; margin-right: 8px; }
+  .skeleton-title { width: 45%; height: 24px; display: block; margin-top: 12px; }
+  .skeleton-tab-bar {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+  }
+  .skeleton-tab { flex: 1; height: 48px; border-right: 1px solid var(--border); }
+  .skeleton-tab:last-child { border-right: none; }
+  .skeleton-banner { height: 48px; width: 100%; border-bottom: 1px solid var(--border); }
+  .skeleton-days {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1px;
+    background: var(--border);
+  }
+  @media (max-width: 720px) { .skeleton-days { grid-template-columns: 1fr; } }
+  .skeleton-day {
+    background: var(--surface);
+    padding: 22px 24px;
+  }
+  .skeleton-exercise {
+    height: 40px;
+    width: 100%;
+    border-radius: 8px;
+    margin-top: 10px;
+  }
+  
   .result-error {
     padding: 20px 24px;
     color: var(--danger);
@@ -533,14 +688,43 @@
 <header>
   <div class="container nav">
     <a href="/" class="brand" style="text-decoration:none;color:inherit">Lift<span>Genie</span></a>
-    <nav class="nav-links">
+    <div class="nav-actions">
+      <button type="button" class="theme-toggle" id="themeToggle" aria-label="Toggle dark / light mode" title="Toggle theme">
+        <svg class="icon-sun" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="5"></circle>
+          <line x1="12" y1="1" x2="12" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="23"></line>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+          <line x1="1" y1="12" x2="3" y2="12"></line>
+          <line x1="21" y1="12" x2="23" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+      </button>
+      <button type="button" class="menu-toggle" id="menuToggle" aria-label="Open navigation menu" aria-expanded="false" title="Menu">
+        <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="3" y1="12" x2="21" y2="12"></line>
+          <line x1="3" y1="6" x2="21" y2="6"></line>
+          <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+    <div class="nav-overlay" id="navOverlay"></div>
+    <nav class="nav-links" id="navLinks">
+      <button type="button" class="close-menu" id="closeMenu" aria-label="Close navigation menu" title="Close menu">
+        <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
       <a href="/#how">How it works</a>
       <a href="/plans">Plans</a>
       <a href="/#pricing">Pricing</a>
       <a href="/#faq">FAQ</a>
-      <button type="button" class="theme-toggle" id="themeToggle" aria-label="Toggle dark / light mode" title="Toggle theme">
-        <span class="icon-moon">🌙</span><span class="icon-sun">☀️</span>
-      </button>
     </nav>
   </div>
 </header>
@@ -548,7 +732,12 @@
 <main>
   <section class="hero" style="border-top: none;">
     <div class="container">
-      <div class="eyebrow">⚡ <b>5 seconds</b> · No signup · Free forever</div>
+      <div class="eyebrow" style="display:inline-flex;align-items:center;gap:6px">
+        <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)">
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+        </svg>
+        <span><b>5 seconds</b> · No signup · Free forever</span>
+      </div>
       <h1>Your personalized<br/><span class="grad">4-week workout plan,</span><br/>generated by AI.</h1>
       <p class="lede">Tell us your goal, your equipment, and your experience. We'll build a complete plan you can actually follow — adjusted to your body, your schedule, and your gym.</p>
       <div class="cta-row">
@@ -659,10 +848,22 @@
         <span class="sample-tag">Sample · not your plan</span>
         <div class="sample-head">
           <div class="sample-meta">
-            <span class="pill">🎯 Build muscle</span>
-            <span class="pill">📅 4 days / week</span>
-            <span class="pill">🏋️ Full gym</span>
-            <span class="pill">📈 Intermediate</span>
+            <span class="pill">
+              <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>
+              <span>Build muscle</span>
+            </span>
+            <span class="pill">
+              <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent-2)"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+              <span>4 days / week</span>
+            </span>
+            <span class="pill">
+              <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)"><path d="m6.5 6.5 11 11"></path><path d="m21 21-1-1"></path><path d="m3 3 1 1"></path><path d="m18 22 4-4"></path><path d="m2 6 4-4"></path></svg>
+              <span>Full gym</span>
+            </span>
+            <span class="pill">
+              <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent-2)"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+              <span>Intermediate</span>
+            </span>
           </div>
           <h3>Upper / Lower split — 4-week block</h3>
         </div>
@@ -771,14 +972,38 @@
         <p>The most-generated combinations — one click and the form is pre-filled.</p>
       </div>
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;max-width:880px;margin:0 auto">
-        <a href="/workout-plan/build-muscle/full-gym/intermediate" style="display:block;padding:14px 16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);text-decoration:none;font-size:14px">💪 Muscle gain · Full gym · Intermediate</a>
-        <a href="/workout-plan/build-muscle/home-dumbbells/beginner" style="display:block;padding:14px 16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);text-decoration:none;font-size:14px">💪 Muscle gain · Home dumbbells · Beginner</a>
-        <a href="/workout-plan/lose-fat/full-gym/beginner" style="display:block;padding:14px 16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);text-decoration:none;font-size:14px">🔥 Fat loss · Full gym · Beginner</a>
-        <a href="/workout-plan/lose-fat/bodyweight/beginner" style="display:block;padding:14px 16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);text-decoration:none;font-size:14px">🔥 Fat loss · Bodyweight · Beginner</a>
-        <a href="/workout-plan/general-fitness/bodyweight/beginner" style="display:block;padding:14px 16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);text-decoration:none;font-size:14px">⚡ General fitness · Bodyweight · Beginner</a>
-        <a href="/workout-plan/general-fitness/home-dumbbells/intermediate" style="display:block;padding:14px 16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);text-decoration:none;font-size:14px">⚡ General fitness · Home dumbbells · Intermediate</a>
-        <a href="/workout-plan/endurance/bodyweight/intermediate" style="display:block;padding:14px 16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);text-decoration:none;font-size:14px">🏃 Endurance · Bodyweight · Intermediate</a>
-        <a href="/workout-plan/build-muscle/home-barbell/advanced" style="display:block;padding:14px 16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);text-decoration:none;font-size:14px">💪 Muscle gain · Home barbell · Advanced</a>
+        <a href="/workout-plan/build-muscle/full-gym/intermediate" class="popular-link">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)"><path d="m6.5 6.5 11 11"></path><path d="m21 21-1-1"></path><path d="m3 3 1 1"></path><path d="m18 22 4-4"></path><path d="m2 6 4-4"></path></svg>
+          <span>Muscle gain · Full gym · Intermediate</span>
+        </a>
+        <a href="/workout-plan/build-muscle/home-dumbbells/beginner" class="popular-link">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)"><path d="m6.5 6.5 11 11"></path><path d="m21 21-1-1"></path><path d="m3 3 1 1"></path><path d="m18 22 4-4"></path><path d="m2 6 4-4"></path></svg>
+          <span>Muscle gain · Home dumbbells · Beginner</span>
+        </a>
+        <a href="/workout-plan/lose-fat/full-gym/beginner" class="popular-link">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent-2)"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg>
+          <span>Fat loss · Full gym · Beginner</span>
+        </a>
+        <a href="/workout-plan/lose-fat/bodyweight/beginner" class="popular-link">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent-2)"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg>
+          <span>Fat loss · Bodyweight · Beginner</span>
+        </a>
+        <a href="/workout-plan/general-fitness/bodyweight/beginner" class="popular-link">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+          <span>General fitness · Bodyweight · Beginner</span>
+        </a>
+        <a href="/workout-plan/general-fitness/home-dumbbells/intermediate" class="popular-link">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+          <span>General fitness · Home dumbbells · Intermediate</span>
+        </a>
+        <a href="/workout-plan/endurance/bodyweight/intermediate" class="popular-link">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent-2)"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          <span>Endurance · Bodyweight · Intermediate</span>
+        </a>
+        <a href="/workout-plan/build-muscle/home-barbell/advanced" class="popular-link">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)"><path d="m6.5 6.5 11 11"></path><path d="m21 21-1-1"></path><path d="m3 3 1 1"></path><path d="m18 22 4-4"></path><path d="m2 6 4-4"></path></svg>
+          <span>Muscle gain · Home barbell · Advanced</span>
+        </a>
       </div>
       <p style="text-align:center;margin-top:32px"><a href="/plans" style="color:var(--accent-2);font-weight:600">Browse all 60 plan combinations →</a></p>
     </div>
@@ -820,6 +1045,7 @@
 </main>
 
 <script>
+  // Theme Toggle Handler
   (function () {
     const toggle = document.getElementById('themeToggle');
     if (toggle) {
@@ -836,10 +1062,89 @@
     }
   })();
 
+  // Mobile Menu Navigation Drawer Handler
+  (function () {
+    const menuToggle = document.getElementById('menuToggle');
+    const closeMenu = document.getElementById('closeMenu');
+    const navLinks = document.getElementById('navLinks');
+    const navOverlay = document.getElementById('navOverlay');
+
+    function toggleMenu(open) {
+      if (open) {
+        navLinks.classList.add('open');
+        navOverlay.classList.add('open');
+        menuToggle.setAttribute('aria-expanded', 'true');
+        document.body.style.overflow = 'hidden'; // prevent background scrolling on mobile
+      } else {
+        navLinks.classList.remove('open');
+        navOverlay.classList.remove('open');
+        menuToggle.setAttribute('aria-expanded', 'false');
+        document.body.style.overflow = '';
+      }
+    }
+
+    if (menuToggle && closeMenu && navLinks && navOverlay) {
+      menuToggle.addEventListener('click', () => toggleMenu(true));
+      closeMenu.addEventListener('click', () => toggleMenu(false));
+      navOverlay.addEventListener('click', () => toggleMenu(false));
+      
+      // Close mobile menu when links are clicked (important for page anchors)
+      navLinks.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', () => toggleMenu(false));
+      });
+    }
+  })();
+
+  // Plan Generator & Client-side Router
   (function () {
     const form = document.getElementById('planForm');
     const result = document.getElementById('result');
     if (!form || !result) return;
+
+    // Cache of fetched/generated plans to support instant back-button navigation
+    const planCache = {};
+
+    // Premium skeleton loader HTML structure featuring shimmering bars
+    const skeletonHTML = `
+      <div class="skeleton-card">
+        <div class="skeleton-header">
+          <div style="display:flex;flex-wrap:wrap;gap:6px">
+            <span class="skeleton-pill shimmer-bg"></span>
+            <span class="skeleton-pill shimmer-bg"></span>
+            <span class="skeleton-pill shimmer-bg"></span>
+            <span class="skeleton-pill shimmer-bg"></span>
+          </div>
+          <span class="skeleton-line skeleton-title shimmer-bg"></span>
+        </div>
+        <div class="skeleton-tab-bar">
+          <div class="skeleton-tab shimmer-bg"></div>
+          <div class="skeleton-tab shimmer-bg"></div>
+          <div class="skeleton-tab shimmer-bg"></div>
+          <div class="skeleton-tab shimmer-bg"></div>
+        </div>
+        <div class="skeleton-banner shimmer-bg"></div>
+        <div class="skeleton-days">
+          <div class="skeleton-day">
+            <span class="skeleton-line shimmer-bg" style="width:40%;height:18px"></span>
+            <div class="skeleton-exercise shimmer-bg"></div>
+            <div class="skeleton-exercise shimmer-bg"></div>
+            <div class="skeleton-exercise shimmer-bg"></div>
+            <div class="skeleton-exercise shimmer-bg"></div>
+            <div class="skeleton-exercise shimmer-bg"></div>
+            <div class="skeleton-exercise shimmer-bg"></div>
+          </div>
+          <div class="skeleton-day">
+            <span class="skeleton-line shimmer-bg" style="width:40%;height:18px"></span>
+            <div class="skeleton-exercise shimmer-bg"></div>
+            <div class="skeleton-exercise shimmer-bg"></div>
+            <div class="skeleton-exercise shimmer-bg"></div>
+            <div class="skeleton-exercise shimmer-bg"></div>
+            <div class="skeleton-exercise shimmer-bg"></div>
+            <div class="skeleton-exercise shimmer-bg"></div>
+          </div>
+        </div>
+      </div>
+    `;
 
     function escapeHtml(s) {
       return String(s ?? '').replace(/[&<>"']/g, c => ({
@@ -892,11 +1197,26 @@
           <span class="sample-tag" style="background:var(--accent);color:var(--accent-fg);border-color:var(--accent)">Your plan</span>
           <div class="sample-head">
             <div class="sample-meta">
-              <span class="pill">🎯 ${escapeHtml(goalLabel)}</span>
-              <span class="pill">📅 ${s.days_per_week} days / week</span>
-              <span class="pill">🏋️ ${escapeHtml(equipmentLabel)}</span>
-              <span class="pill">📈 ${escapeHtml(experienceLabel)}</span>
-              <span class="pill">⏱ ~${s.estimated_session_minutes} min/session</span>
+              <span class="pill">
+                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>
+                <span>${escapeHtml(goalLabel)}</span>
+              </span>
+              <span class="pill">
+                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent-2)"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                <span>${s.days_per_week} days / week</span>
+              </span>
+              <span class="pill">
+                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)"><path d="m6.5 6.5 11 11"></path><path d="m21 21-1-1"></path><path d="m3 3 1 1"></path><path d="m18 22 4-4"></path><path d="m2 6 4-4"></path></svg>
+                <span>${escapeHtml(equipmentLabel)}</span>
+              </span>
+              <span class="pill">
+                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent-2)"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                <span>${escapeHtml(experienceLabel)}</span>
+              </span>
+              <span class="pill">
+                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                <span>~${s.estimated_session_minutes} min/session</span>
+              </span>
             </div>
             <h3>${escapeHtml(s.split || 'Your 4-week plan')}</h3>
           </div>
@@ -931,7 +1251,7 @@
       if (regen) {
         regen.addEventListener('click', () => {
           result.innerHTML = '';
-          history.replaceState(null, '', '/');
+          history.pushState(null, '', '/');
           form.scrollIntoView({ behavior: 'smooth', block: 'center' });
         });
       }
@@ -967,21 +1287,31 @@
     }
 
     async function loadSharedPlan(id) {
-      result.innerHTML = `
-        <div class="result-loading">
-          <div class="spinner"></div>
-          <div>Loading plan…</div>
-        </div>
-      `;
+      if (planCache[id]) {
+        renderPlan(planCache[id]);
+        return;
+      }
+      result.innerHTML = skeletonHTML;
       try {
         const res = await fetch(`/api/plan/${encodeURIComponent(id)}`);
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Plan not found');
+        planCache[id] = data; // Cache client-side
         renderPlan(data);
       } catch (err) {
         result.innerHTML = `<div class="result-error"><b>Couldn't load shared plan.</b><br>${escapeHtml(err.message)}<br><span style="color:var(--muted);font-size:13px">Try generating a new one below.</span></div>`;
       }
     }
+
+    // SPA history navigation listener
+    window.addEventListener('popstate', () => {
+      const sharedMatch = window.location.pathname.match(/^\/plan\/([a-z0-9]{6,32})$/);
+      if (sharedMatch) {
+        loadSharedPlan(sharedMatch[1]);
+      } else {
+        result.innerHTML = '';
+      }
+    });
 
     const sharedMatch = window.location.pathname.match(/^\/plan\/([a-z0-9]{6,32})$/);
     if (sharedMatch) {
@@ -1017,13 +1347,7 @@
       submitBtn.disabled = true;
       submitBtn.textContent = 'Generating…';
 
-      result.innerHTML = `
-        <div class="result-loading">
-          <div class="spinner"></div>
-          <div>Building your 4-week plan…</div>
-          <div style="font-size:12px;margin-top:6px">Usually takes 5–15 seconds.</div>
-        </div>
-      `;
+      result.innerHTML = skeletonHTML;
       result.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
       const payload = {
@@ -1051,6 +1375,7 @@
           throw err;
         }
         if (data.id) {
+          planCache[data.id] = data; // Cache generated plan
           history.pushState(null, '', `/plan/${data.id}`);
         }
         renderPlan(data);
