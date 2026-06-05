@@ -102,6 +102,7 @@
     --radius: 14px;
     --max: 1100px;
     --accent-glow: rgba(124, 242, 156, 0.15);
+    --accent-glow-2: rgba(91, 224, 255, 0.12);
   }
   [data-theme="light"] {
     --bg: #fafbfc;
@@ -117,8 +118,16 @@
     --week-banner-bg: rgba(21,128,61,0.06); /* Adjusted to match Green-700 */
     --tab-active-bg: rgba(21,128,61,0.04); /* Adjusted to match Green-700 */
     --accent-glow: rgba(21, 128, 61, 0.15);
+    --accent-glow-2: rgba(3, 105, 161, 0.08);
   }
-  html, body { background: var(--bg); }
+  html, body { 
+    background: var(--bg); 
+    background-image: radial-gradient(rgba(38, 43, 59, 0.4) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+  [data-theme="light"] html, [data-theme="light"] body {
+    background-image: radial-gradient(rgba(228, 231, 238, 0.6) 1px, transparent 1px);
+  }
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; }
   body {
@@ -134,7 +143,7 @@
   a { color: var(--accent-2); text-decoration: none; touch-action: manipulation; }
   a:hover { text-decoration: underline; }
 
-  .container { max-width: var(--max); margin: 0 auto; padding: 0 24px; }
+  .container { max-width: var(--max); margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
 
   /* Keyboard Accessibility focus rings & Click tuning */
   button:focus-visible,
@@ -669,6 +678,169 @@
     display: none;
   }
 
+  /* Section Glows & Background Depth */
+  .hero-glow, .generator-glow, .pricing-glow {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(140px);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .hero-glow {
+    width: 400px;
+    height: 400px;
+    top: -150px;
+    right: -100px;
+    background: radial-gradient(circle, var(--accent-glow-2) 0%, transparent 70%);
+  }
+  .generator-glow {
+    width: 500px;
+    height: 500px;
+    bottom: -150px;
+    left: -150px;
+    background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+  }
+  .pricing-glow {
+    width: 450px;
+    height: 450px;
+    top: 50%;
+    right: -100px;
+    transform: translateY(-50%);
+    background: radial-gradient(circle, var(--accent-glow-2) 0%, transparent 70%);
+  }
+
+  /* Hero Desktop 2-Column Split & Mockup Card */
+  .hero-graphic {
+    display: none;
+    flex: 1;
+    justify-content: center;
+    align-items: center;
+  }
+  @media (min-width: 960px) {
+    .hero .container {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 48px;
+      text-align: left;
+    }
+    .hero .eyebrow { justify-content: flex-start; }
+    .hero h1 { font-size: 52px; line-height: 1.1; margin: 0 0 24px; }
+    .hero .cta-row { justify-content: flex-start; }
+    .hero .trust { justify-content: flex-start; }
+    .hero-graphic { display: flex; }
+    .hero-text { max-width: 55%; text-align: left; }
+  }
+  
+  .mockup-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    width: 320px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+    animation: floatCard 5s ease-in-out infinite alternate;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  @keyframes floatCard {
+    0% { transform: translateY(0px) rotate(1deg); }
+    100% { transform: translateY(-15px) rotate(-1deg); }
+  }
+  
+  .mockup-header {
+    background: var(--surface-2);
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .mockup-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+  .mockup-dot.red { background: #ff5f56; }
+  .mockup-dot.yellow { background: #ffbd2e; }
+  .mockup-dot.green { background: #27c93f; }
+  .mockup-title {
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  
+  .mockup-body {
+    padding: 18px;
+  }
+  
+  .mockup-day {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 14px;
+    color: var(--text);
+  }
+  
+  .mockup-ex {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .mockup-ex:last-of-type { margin-bottom: 0; }
+  .mockup-ex.active {
+    border-color: var(--accent);
+    box-shadow: 0 0 12px var(--accent-glow);
+  }
+  
+  .mockup-ex-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    text-align: left;
+  }
+  .mockup-ex-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .mockup-ex-sets {
+    font-size: 10px;
+    color: var(--muted);
+  }
+  
+  .mockup-checkboxes {
+    display: flex;
+    gap: 4px;
+  }
+  .mockup-check {
+    width: 16px;
+    height: 16px;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: var(--accent);
+    background: transparent;
+  }
+  .mockup-check.checked {
+    background: var(--accent-glow);
+    border-color: var(--accent);
+  }
+  .mockup-check.active {
+    border-color: var(--accent-2);
+    box-shadow: 0 0 4px var(--accent-glow-2);
+  }
+
   @media print {
     :root, [data-theme="light"] {
       --bg: #ffffff;
@@ -841,29 +1013,80 @@
 </header>
 
 <main>
-  <section class="hero" style="border-top: none;">
+  <section class="hero" style="border-top: none; position: relative; overflow: hidden;">
+    <div class="hero-glow" aria-hidden="true"></div>
     <div class="container">
-      <div class="eyebrow" style="display:inline-flex;align-items:center;gap:6px">
-        <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)">
-          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
-        </svg>
-        <span><b>5 seconds</b> · No signup · Free forever</span>
+      <div class="hero-text">
+        <div class="eyebrow" style="display:inline-flex;align-items:center;gap:6px">
+          <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+          </svg>
+          <span><b>5 seconds</b> · No signup · Free forever</span>
+        </div>
+        <h1>Your personalized<br/><span class="grad">4-week workout plan,</span><br/>built for your goals.</h1>
+        <p class="lede">Tell us your goal, your equipment, and your experience. We'll build a complete plan you can actually follow — adjusted to your body, your schedule, and your gym.</p>
+        <div class="cta-row">
+          <a href="#generate" class="btn btn-primary">Generate my plan →</a>
+          <a href="#how" class="btn btn-ghost">How it works</a>
+        </div>
+        <div class="trust">
+          <span>No account required</span>
+          <span>Works on any device</span>
+          <span>Printable PDF</span>
+        </div>
       </div>
-      <h1>Your personalized<br/><span class="grad">4-week workout plan,</span><br/>built for your goals.</h1>
-      <p class="lede">Tell us your goal, your equipment, and your experience. We'll build a complete plan you can actually follow — adjusted to your body, your schedule, and your gym.</p>
-      <div class="cta-row">
-        <a href="#generate" class="btn btn-primary">Generate my plan →</a>
-        <a href="#how" class="btn btn-ghost">How it works</a>
-      </div>
-      <div class="trust">
-        <span>No account required</span>
-        <span>Works on any device</span>
-        <span>Printable PDF</span>
+      <div class="hero-graphic">
+        <div class="mockup-card">
+          <div class="mockup-header">
+            <div class="mockup-dot red"></div>
+            <div class="mockup-dot yellow"></div>
+            <div class="mockup-dot green"></div>
+            <span class="mockup-title">Today's Workout</span>
+          </div>
+          <div class="mockup-body">
+            <div class="mockup-day">Day 1 · Upper Body</div>
+            <div class="mockup-ex active">
+              <div class="mockup-ex-meta">
+                <span class="mockup-ex-name">Bench Press</span>
+                <span class="mockup-ex-sets">3 sets × 8 reps</span>
+              </div>
+              <div class="mockup-checkboxes">
+                <span class="mockup-check checked">✓</span>
+                <span class="mockup-check checked">✓</span>
+                <span class="mockup-check active"></span>
+              </div>
+            </div>
+            <div class="mockup-ex">
+              <div class="mockup-ex-meta">
+                <span class="mockup-ex-name">Incline Dumbbell Fly</span>
+                <span class="mockup-ex-sets">3 sets × 12 reps</span>
+              </div>
+              <div class="mockup-checkboxes">
+                <span class="mockup-check"></span>
+                <span class="mockup-check"></span>
+                <span class="mockup-check"></span>
+              </div>
+            </div>
+            <div class="mockup-ex">
+              <div class="mockup-ex-meta">
+                <span class="mockup-ex-name">Lat Pulldown</span>
+                <span class="mockup-ex-sets">4 sets × 10 reps</span>
+              </div>
+              <div class="mockup-checkboxes">
+                <span class="mockup-check"></span>
+                <span class="mockup-check"></span>
+                <span class="mockup-check"></span>
+                <span class="mockup-check"></span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </section>
 
-  <section class="generator" id="generate" style="border-top: none; padding-top: 0;">
+  <section class="generator" id="generate" style="border-top: none; padding-top: 0; position: relative; overflow: hidden;">
+    <div class="generator-glow" aria-hidden="true"></div>
     <div class="container">
       <div class="card">
         <h2>Build your plan</h2>
@@ -1040,7 +1263,8 @@
     </div>
   </section>
 
-  <section id="pricing">
+  <section id="pricing" style="position: relative; overflow: hidden;">
+    <div class="pricing-glow" aria-hidden="true"></div>
     <div class="container">
       <div class="section-head">
         <h2>Simple pricing</h2>
